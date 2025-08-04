@@ -56,5 +56,5 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "KazanskayaOcen.sln"
+    "dotnet.defaultSolution": "VisualNovel.sln"
 }
