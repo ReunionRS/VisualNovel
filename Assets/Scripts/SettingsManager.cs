@@ -52,8 +52,8 @@ public class SettingsManager : MonoBehaviour
     
     [Header("Buttons")]
     public Button okButton;
-    public Button cancelButton;
     public Button defaultsButton;
+    // public Button backButton; // Временно отключаем
     
     [Header("References")]
     public VisualNovelManager vnManager;
@@ -69,15 +69,18 @@ public class SettingsManager : MonoBehaviour
         LoadSettings();
         SetupUI();
         
+        // Всегда скрываем настройки при старте
+        if (settingsPanel != null)
+            settingsPanel.SetActive(false);
+            
+        if (firstTimeSetupPanel != null)
+            firstTimeSetupPanel.SetActive(false);
+        
         // Проверяем, первый ли раз запускается игра
         if (!PlayerPrefs.HasKey("FirstTimePlayed"))
         {
-            ShowFirstTimeSetup();
-        }
-        else
-        {
-            if (settingsPanel != null)
-                settingsPanel.SetActive(false);
+            // Можно показать первоначальную настройку позже
+            // ShowFirstTimeSetup();
         }
         
         ApplySettings();
@@ -89,11 +92,11 @@ public class SettingsManager : MonoBehaviour
         if (okButton != null)
             okButton.onClick.AddListener(SaveAndClose);
             
-        if (cancelButton != null)
-            cancelButton.onClick.AddListener(CancelAndClose);
-            
         if (defaultsButton != null)
             defaultsButton.onClick.AddListener(ResetToDefaults);
+            
+        /*if (backButton != null)
+            backButton.onClick.AddListener(GoBack);*/ // Временно отключаем
         
         // Настраиваем слайдеры
         if (textSpeedSlider != null)
@@ -152,27 +155,51 @@ public class SettingsManager : MonoBehaviour
     
     private void UpdateUI()
     {
+        // Проверяем, что настройки загружены
+        if (currentSettings == null)
+        {
+            Debug.LogError("currentSettings is null! Loading default settings.");
+            currentSettings = new GameSettings();
+        }
+        
+        // Добавляем проверки на null
+        Debug.Log("UpdateUI called");
+        
         // Обновляем UI элементы в соответствии с текущими настройками
         if (fullscreenToggle != null)
             fullscreenToggle.isOn = currentSettings.isFullscreen;
+        else
+            Debug.LogWarning("fullscreenToggle is null!");
             
         if (skipReadToggle != null)
             skipReadToggle.isOn = currentSettings.skipRead;
+        else
+            Debug.LogWarning("skipReadToggle is null!");
             
         if (skipAfterChoiceToggle != null)
             skipAfterChoiceToggle.isOn = currentSettings.skipAfterChoice;
+        else
+            Debug.LogWarning("skipAfterChoiceToggle is null!");
             
         if (textSpeedSlider != null)
             textSpeedSlider.value = currentSettings.textSpeed;
+        else
+            Debug.LogWarning("textSpeedSlider is null!");
             
         if (autoSpeedSlider != null)
             autoSpeedSlider.value = currentSettings.autoSpeed;
+        else
+            Debug.LogWarning("autoSpeedSlider is null!");
             
         if (musicVolumeSlider != null)
             musicVolumeSlider.value = currentSettings.musicVolume;
+        else
+            Debug.LogWarning("musicVolumeSlider is null!");
             
         if (soundVolumeSlider != null)
             soundVolumeSlider.value = currentSettings.soundVolume;
+        else
+            Debug.LogWarning("soundVolumeSlider is null!");
             
         if (languageDropdown != null)
         {
@@ -180,6 +207,8 @@ public class SettingsManager : MonoBehaviour
                            currentSettings.language == SystemLanguage.English ? 1 : 2;
             languageDropdown.value = langIndex;
         }
+        else
+            Debug.LogWarning("languageDropdown is null!");
     }
     
     // Обработчики событий UI
@@ -258,6 +287,12 @@ public class SettingsManager : MonoBehaviour
         currentSettings = new GameSettings(); // Создаем настройки по умолчанию
         UpdateUI();
         ApplySettings();
+    }
+    
+    public void GoBack()
+    {
+        // Просто возвращаемся без сохранения изменений
+        CancelAndClose();
     }
     
     private void CloseSettings()
