@@ -8,8 +8,8 @@ public class VisualNovelManager : MonoBehaviour
 {
     [Header("UI Elements")]
     public Image backgroundImage;
-    public Image backgroundImageOverlay;
-    public Image dialogueBoxBackground; 
+    public Image backgroundImageOverlay; // Второй слой для плавных переходов
+    public Image dialogueBoxBackground; // Фон для текстового блока
     public TextMeshProUGUI dialogueText;
     public TextMeshProUGUI playerNameText;
     public Button nextButton;
@@ -31,8 +31,8 @@ public class VisualNovelManager : MonoBehaviour
     public AudioSource sfxSource;
     public AudioClip guitarClip;
     
-    [Header("Name Input")]
-    public NameInputManager nameInputManager;
+    // [Header("Name Input")]
+    // public NameInputManager nameInputManager;
     
     private bool waitingForNameInput = false;
     
@@ -48,11 +48,15 @@ public class VisualNovelManager : MonoBehaviour
             return;
         }
         
+        // Загружаем имя игрока из PlayerPrefs
+        LoadPlayerName();
+        
         if (playerNameText != null)
             playerNameText.text = playerName;
         
         nextButton.onClick.AddListener(NextDialogue);
         
+        // Настраиваем начальное состояние диалогового блока
         if (dialogueBoxBackground != null && !autoShowDialogueBox)
         {
             SetDialogueBoxVisible(false);
@@ -61,10 +65,27 @@ public class VisualNovelManager : MonoBehaviour
         ShowNextDialogue();
     }
     
+    // Загружаем имя игрока из сохранения
+    private void LoadPlayerName()
+    {
+        if (PlayerPrefs.HasKey("PlayerName"))
+        {
+            playerName = PlayerPrefs.GetString("PlayerName");
+            Debug.Log($"Player name loaded: {playerName}");
+        }
+        else
+        {
+            // Если имя не сохранено, используем дефолтное
+            playerName = "Игрок";
+            Debug.Log("No saved player name found, using default: Игрок");
+        }
+    }
+    
     public void NextDialogue()
     {
         if (isTyping)
         {
+            // Пропустить анимацию печати
             if (typingCoroutine != null)
             {
                 StopCoroutine(typingCoroutine);
@@ -78,6 +99,7 @@ public class VisualNovelManager : MonoBehaviour
         
         if (currentDialogueIndex >= currentChapter.dialogues.Length)
         {
+            // Конец главы
             EndChapter();
             return;
         }
@@ -91,37 +113,45 @@ public class VisualNovelManager : MonoBehaviour
         
         DialogueEntry currentEntry = currentChapter.dialogues[currentDialogueIndex];
         
+        // Проверяем специальные команды в тексте
         if (currentEntry.text.Contains("[ВВОД_ИМЕНИ]"))
         {
-            if (nameInputManager != null)
+            // Показываем окно ввода имени
+            /*if (nameInputManager != null)
             {
                 waitingForNameInput = true;
                 nameInputManager.ShowNameInput();
-                return; 
-            }
+                return; // Не показываем диалог, пока не введут имя
+            }*/
         }
         
+        // Загрузить фон
         LoadBackground(currentEntry.backgroundImage);
         
+        // Воспроизвести звук
         if (!string.IsNullOrEmpty(currentEntry.soundEffect))
         {
             PlaySoundEffect(currentEntry.soundEffect);
         }
         
+        // Обновить имя говорящего
         if (playerNameText != null)
         {
             string speakerName = ProcessText(currentEntry.speakerName);
             playerNameText.text = speakerName;
         }
         
+        // Показать текст с эффектом печатной машинки
         string processedText = ProcessText(currentEntry.text);
         typingCoroutine = StartCoroutine(TypewriterEffect(processedText));
     }
     
+    // Метод для продолжения после ввода имени
     public void ContinueAfterNameInput()
     {
         waitingForNameInput = false;
         
+        // Пропускаем диалог с [ВВОД_ИМЕНИ] и переходим к следующему
         currentDialogueIndex++;
         if (currentDialogueIndex < currentChapter.dialogues.Length)
         {
@@ -129,6 +159,7 @@ public class VisualNovelManager : MonoBehaviour
         }
     }
     
+    // Обработка специальных тегов в тексте
     string ProcessText(string text)
     {
         return text.Replace("[ИМЯ ИГРОКА]", playerName);
@@ -163,13 +194,16 @@ public class VisualNovelManager : MonoBehaviour
     {
         Debug.Log("Fade transition started");
         
+        // Если есть overlay слой, используем его для плавного перехода
         if (backgroundImageOverlay != null)
         {
+            // Устанавливаем новый фон на overlay
             backgroundImageOverlay.sprite = newBackground;
             backgroundImageOverlay.color = new Color(1, 1, 1, 0);
             
             Debug.Log($"Fading over {backgroundFadeDuration} seconds");
             
+            // Плавно показываем overlay
             float elapsedTime = 0;
             while (elapsedTime < backgroundFadeDuration)
             {
@@ -181,11 +215,13 @@ public class VisualNovelManager : MonoBehaviour
             
             Debug.Log("Fade completed, swapping backgrounds");
             
+            // Заменяем основной фон и скрываем overlay
             backgroundImage.sprite = newBackground;
             backgroundImageOverlay.color = new Color(1, 1, 1, 0);
         }
         else
         {
+            // Простая замена без анимации, если нет overlay
             backgroundImage.sprite = newBackground;
             Debug.LogWarning("No overlay found, using instant background change");
         }
@@ -228,12 +264,15 @@ public class VisualNovelManager : MonoBehaviour
     
     IEnumerator ShowChapterEnd()
     {
+        // Показать текст завершения главы
         dialogueText.text = $"{currentChapter.chapterTitle} - завершена";
         if (playerNameText != null)
             playerNameText.text = "";
         
+        // Подождать
         yield return new WaitForSeconds(3f);
         
+        // Перейти к следующей главе, если есть
         if (currentChapter.nextChapter != null)
         {
             LoadNextChapter();
@@ -263,6 +302,7 @@ public class VisualNovelManager : MonoBehaviour
         }
     }
     
+    // Управление видимостью диалогового блока
     public void SetDialogueBoxVisible(bool visible)
     {
         if (dialogueBoxBackground != null)
@@ -278,9 +318,11 @@ public class VisualNovelManager : MonoBehaviour
         float startAlpha = fadeIn ? 0f : 1f;
         float endAlpha = fadeIn ? 1f : 0f;
         
+        // Также управляем текстом и кнопкой
         CanvasGroup dialogueGroup = dialoguePanel;
         if (dialogueGroup == null)
         {
+            // Если нет CanvasGroup, управляем напрямую через альфа Image
             Color boxColor = dialogueBoxBackground.color;
             Color textColor = dialogueText.color;
             
@@ -302,6 +344,7 @@ public class VisualNovelManager : MonoBehaviour
                 yield return null;
             }
             
+            // Устанавливаем финальные значения
             dialogueBoxBackground.color = new Color(boxColor.r, boxColor.g, boxColor.b, endAlpha);
             dialogueText.color = new Color(textColor.r, textColor.g, textColor.b, endAlpha);
             if (playerNameText != null)
@@ -312,6 +355,7 @@ public class VisualNovelManager : MonoBehaviour
         }
         else
         {
+            // Используем CanvasGroup для плавного появления/исчезновения
             float elapsedTime = 0;
             while (elapsedTime < dialogueBoxFadeDuration)
             {
@@ -325,6 +369,7 @@ public class VisualNovelManager : MonoBehaviour
         }
     }
     
+    // Метод для показа диалогового блока при необходимости
     public void ShowDialogueBoxIfNeeded()
     {
         if (dialogueBoxBackground != null && dialogueBoxBackground.color.a < 0.5f)

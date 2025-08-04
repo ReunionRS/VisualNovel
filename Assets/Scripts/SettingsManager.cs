@@ -59,22 +59,27 @@ public class SettingsManager : MonoBehaviour
     public VisualNovelManager vnManager;
     public AudioSource musicSource;
     public AudioSource soundSource;
-    public MainMenuManager mainMenuManager; 
+    public MainMenuManager mainMenuManager; // Добавляем ссылку на главное меню
+    public PauseManager pauseManager; // Добавляем ссылку на меню паузы
+    
+    private bool openedFromPause = false; // Флаг для отслеживания откуда открыты настройки
     
     private GameSettings currentSettings;
-    private GameSettings originalSettings;
+    private GameSettings originalSettings; // Для отмены изменений
     
     private void Start()
     {
         LoadSettings();
         SetupUI();
         
+        // Всегда скрываем настройки при старте
         if (settingsPanel != null)
             settingsPanel.SetActive(false);
             
         if (firstTimeSetupPanel != null)
             firstTimeSetupPanel.SetActive(false);
         
+        // Проверяем, первый ли раз запускается игра
         if (!PlayerPrefs.HasKey("FirstTimePlayed"))
         {
             // Можно показать первоначальную настройку позже
@@ -86,16 +91,17 @@ public class SettingsManager : MonoBehaviour
     
     private void SetupUI()
     {
+        // Настраиваем UI элементы
         if (okButton != null)
         {
-            okButton.onClick.RemoveAllListeners(); 
-            okButton.onClick.AddListener(ApplySettingsButton);
+            okButton.onClick.RemoveAllListeners(); // Удаляем старые события
+            okButton.onClick.AddListener(ApplySettingsButton); // Применить без закрытия
         }
             
         if (cancelButton != null)
         {
             cancelButton.onClick.RemoveAllListeners();
-            cancelButton.onClick.AddListener(CancelAndClose); 
+            cancelButton.onClick.AddListener(CancelAndClose); // Вернуться в меню
         }
             
         if (defaultsButton != null)
@@ -104,6 +110,10 @@ public class SettingsManager : MonoBehaviour
             defaultsButton.onClick.AddListener(ResetToDefaults);
         }
             
+        /*if (backButton != null)
+            backButton.onClick.AddListener(GoBack);*/ // Временно отключаем
+        
+        // Настраиваем слайдеры
         if (textSpeedSlider != null)
             textSpeedSlider.onValueChanged.AddListener(OnTextSpeedChanged);
             
@@ -116,6 +126,7 @@ public class SettingsManager : MonoBehaviour
         if (soundVolumeSlider != null)
             soundVolumeSlider.onValueChanged.AddListener(OnSoundVolumeChanged);
         
+        // Настраиваем тогглы
         if (fullscreenToggle != null)
             fullscreenToggle.onValueChanged.AddListener(OnFullscreenChanged);
             
@@ -125,6 +136,7 @@ public class SettingsManager : MonoBehaviour
         if (skipAfterChoiceToggle != null)
             skipAfterChoiceToggle.onValueChanged.AddListener(OnSkipAfterChoiceChanged);
         
+        // Настраиваем dropdown языков
         if (languageDropdown != null)
         {
             languageDropdown.options.Clear();
@@ -140,12 +152,19 @@ public class SettingsManager : MonoBehaviour
     {
         if (settingsPanel != null)
         {
+            // Проверяем, открыты ли настройки из меню паузы
+            openedFromPause = (PauseManager.Instance != null && PauseManager.Instance.IsPaused());
+            
+            // Загружаем актуальные настройки из PlayerPrefs
             LoadSettings();
             
+            // Сохраняем текущие настройки для возможности отмены
             originalSettings = JsonUtility.FromJson<GameSettings>(JsonUtility.ToJson(currentSettings));
             
             settingsPanel.SetActive(true);
             UpdateUI();
+            
+            Debug.Log($"Settings opened from pause: {openedFromPause}");
         }
     }
     
@@ -160,14 +179,17 @@ public class SettingsManager : MonoBehaviour
     
     private void UpdateUI()
     {
+        // Проверяем, что настройки загружены
         if (currentSettings == null)
         {
             Debug.LogError("currentSettings is null! Loading default settings.");
             currentSettings = new GameSettings();
         }
         
+        // Добавляем проверки на null
         Debug.Log("UpdateUI called");
         
+        // Обновляем UI элементы в соответствии с текущими настройками
         if (fullscreenToggle != null)
             fullscreenToggle.isOn = currentSettings.isFullscreen;
         else
@@ -213,6 +235,7 @@ public class SettingsManager : MonoBehaviour
             Debug.LogWarning("languageDropdown is null!");
     }
     
+    // Обработчики событий UI
     private void OnFullscreenChanged(bool value)
     {
         currentSettings.isFullscreen = value;
@@ -237,12 +260,13 @@ public class SettingsManager : MonoBehaviour
         currentSettings.textSpeed = value;
         Debug.Log($"Text speed changed to: {value}");
         if (vnManager != null)
-            vnManager.typewriterSpeed = 0.1f / value; 
+            vnManager.typewriterSpeed = 0.1f / value; // Обратная зависимость
     }
     
     private void OnAutoSpeedChanged(float value)
     {
         currentSettings.autoSpeed = value;
+        // Debug.Log($"Auto speed changed to: {value}"); // Убираем спам
     }
     
     private void OnMusicVolumeChanged(float value)
@@ -250,9 +274,11 @@ public class SettingsManager : MonoBehaviour
         currentSettings.musicVolume = value;
         Debug.Log($"Music volume changed to: {value}");
         
+        // Обновляем громкость в AudioSource
         if (musicSource != null)
             musicSource.volume = value;
             
+        // Обновляем громкость в BackgroundMusicManager
         if (BackgroundMusicManager.instance != null)
             BackgroundMusicManager.instance.SetVolume(value);
     }
@@ -278,10 +304,12 @@ public class SettingsManager : MonoBehaviour
         ApplySettingsToGame();
         CloseSettings();
         
+        // Если это первый запуск, отмечаем это
         PlayerPrefs.SetInt("FirstTimePlayed", 1);
         PlayerPrefs.Save();
     }
     
+    // Метод для кнопки "Применить" - сохраняет БЕЗ закрытия
     public void ApplySettingsButton()
     {
         if (currentSettings == null)
@@ -294,33 +322,44 @@ public class SettingsManager : MonoBehaviour
         SaveSettingsToFile();
         ApplySettingsToGame();
         
+        // Показываем сообщение "Настройки применены"
         StartCoroutine(ShowAppliedMessage());
     }
     
+    // Переименовали старый ApplySettings
     private void ApplySettingsToGame()
     {
+        // Применяем настройки экрана
         Screen.fullScreen = currentSettings.isFullscreen;
         
+        // Применяем аудио настройки
         if (musicSource != null)
             musicSource.volume = currentSettings.musicVolume;
             
         if (soundSource != null)
             soundSource.volume = currentSettings.soundVolume;
         
+        // Применяем настройки скорости текста
         if (vnManager != null)
             vnManager.typewriterSpeed = 0.1f / currentSettings.textSpeed;
     }
     
+    // Корутина для показа сообщения
     IEnumerator ShowAppliedMessage()
     {
+        // Здесь можно показать UI сообщение или просто лог
         Debug.Log("Настройки применены!");
         
+        // Если хочешь показать UI сообщение:
+        // Создай Text объект и покажи его на 2 секунды
         yield return new WaitForSeconds(2f);
         
+        // Скрыть сообщение
     }
     
     public void CancelAndClose()
     {
+        // Восстанавливаем исходные настройки
         if (originalSettings != null)
         {
             currentSettings = JsonUtility.FromJson<GameSettings>(JsonUtility.ToJson(originalSettings));
@@ -331,13 +370,14 @@ public class SettingsManager : MonoBehaviour
     
     public void ResetToDefaults()
     {
-        currentSettings = new GameSettings(); 
+        currentSettings = new GameSettings(); // Создаем настройки по умолчанию
         UpdateUI();
         ApplySettingsToGame();
     }
     
     public void GoBack()
     {
+        // Просто возвращаемся без сохранения изменений
         CancelAndClose();
     }
     
@@ -348,11 +388,33 @@ public class SettingsManager : MonoBehaviour
             
         if (firstTimeSetupPanel != null)
             firstTimeSetupPanel.SetActive(false);
-            
-        if (mainMenuManager != null)
+        
+        // Проверяем, откуда были открыты настройки
+        if (openedFromPause)
         {
-            mainMenuManager.ShowMainMenu();
+            // Возвращаемся в меню паузы
+            if (pauseManager != null)
+            {
+                pauseManager.CloseSettings();
+            }
+            else if (PauseManager.Instance != null)
+            {
+                PauseManager.Instance.CloseSettings();
+            }
+            Debug.Log("Returning to pause menu");
         }
+        else
+        {
+            // Возвращаемся в главное меню, если мы в меню
+            if (mainMenuManager != null)
+            {
+                mainMenuManager.ShowMainMenu();
+            }
+            Debug.Log("Returning to main menu");
+        }
+        
+        // Сбрасываем флаг
+        openedFromPause = false;
     }
     
     private void LoadSettings()
@@ -365,7 +427,7 @@ public class SettingsManager : MonoBehaviour
         }
         else
         {
-            currentSettings = new GameSettings(); 
+            currentSettings = new GameSettings(); // Настройки по умолчанию
             Debug.Log("No saved settings found, using defaults");
         }
     }
@@ -379,18 +441,22 @@ public class SettingsManager : MonoBehaviour
     
     private void ApplySettings()
     {
+        // Применяем настройки экрана
         Screen.fullScreen = currentSettings.isFullscreen;
         
+        // Применяем аудио настройки
         if (musicSource != null)
             musicSource.volume = currentSettings.musicVolume;
             
         if (soundSource != null)
             soundSource.volume = currentSettings.soundVolume;
         
+        // Применяем настройки скорости текста
         if (vnManager != null)
             vnManager.typewriterSpeed = 0.1f / currentSettings.textSpeed;
     }
     
+    // Публичные методы для доступа к настройкам
     public GameSettings GetSettings()
     {
         return currentSettings;
