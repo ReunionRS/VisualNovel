@@ -10,7 +10,6 @@ public class BackgroundMusicManager : MonoBehaviour
 
     void Awake()
     {
-        // Синглтон — чтобы музыка не обрывалась при смене сцен
         if (instance == null)
         {
             instance = this;
@@ -31,7 +30,7 @@ public class BackgroundMusicManager : MonoBehaviour
         {
             audioSource.clip = backgroundMusic;
             audioSource.loop = true;
-            audioSource.volume = 0.5f; // Громкость по вкусу
+            audioSource.volume = 0.5f; 
             audioSource.Play();
         }
         else

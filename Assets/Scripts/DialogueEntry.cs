@@ -10,5 +10,5 @@ public class DialogueEntry
     public string backgroundImage;
     public string soundEffect;
     [Header("Character")]
-    public string speakerName = "[ИМЯ ИГРОКА]"; // По умолчанию главный герой
+    public string speakerName = "[ИМЯ ИГРОКА]"; 
 }

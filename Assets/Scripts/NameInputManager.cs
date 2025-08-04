@@ -17,14 +17,12 @@ public class NameInputManager : MonoBehaviour
     
     private void Start()
     {
-        // Настраиваем UI
         if (nameInputPanel != null)
             nameInputPanel.SetActive(false);
             
         if (confirmButton != null)
             confirmButton.onClick.AddListener(ConfirmName);
             
-        // Настраиваем prompt текст
         if (promptText != null)
             promptText.text = "Как вас зовут?";
     }
@@ -33,12 +31,10 @@ public class NameInputManager : MonoBehaviour
     {
         Debug.Log("Showing name input");
         
-        // Показываем панель ввода имени
         if (nameInputPanel != null)
         {
             nameInputPanel.SetActive(true);
             
-            // Фокусируемся на поле ввода
             if (nameInputField != null)
             {
                 nameInputField.text = "";
@@ -52,15 +48,12 @@ public class NameInputManager : MonoBehaviour
     {
         string playerName = nameInputField.text.Trim();
         
-        // Проверяем, что имя не пустое
         if (string.IsNullOrEmpty(playerName))
         {
-            // Можно показать сообщение об ошибке
             Debug.LogWarning("Name cannot be empty");
             return;
         }
         
-        // Ограничиваем длину имени
         if (playerName.Length > 20)
         {
             playerName = playerName.Substring(0, 20);
@@ -68,24 +61,20 @@ public class NameInputManager : MonoBehaviour
         
         Debug.Log($"Player name set to: {playerName}");
         
-        // Передаем имя в VisualNovelManager
         if (vnManager != null)
         {
             vnManager.SetPlayerName(playerName);
         }
         
-        // Скрываем панель ввода
         if (nameInputPanel != null)
             nameInputPanel.SetActive(false);
             
-        // Продолжаем диалог
         if (vnManager != null)
         {
             vnManager.ContinueAfterNameInput();
         }
     }
     
-    // Обработка Enter в поле ввода
     private void Update()
     {
         if (nameInputPanel != null && nameInputPanel.activeInHierarchy)

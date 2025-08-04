@@ -6,14 +6,11 @@ public class ChapterDataMenuCreator
     [MenuItem("Assets/Create/Visual Novel/Chapter Data", false, 1)]
     public static void CreateChapterData()
     {
-        // Создаем новый ScriptableObject
         ChapterData newChapterData = ScriptableObject.CreateInstance<ChapterData>();
         
-        // Устанавливаем базовые значения
         newChapterData.chapterTitle = "Новая глава";
         newChapterData.chapterNumber = 1;
         
-        // Создаем массив с одним пустым диалогом
         newChapterData.dialogues = new DialogueEntry[1];
         newChapterData.dialogues[0] = new DialogueEntry
         {
@@ -23,7 +20,6 @@ public class ChapterDataMenuCreator
             speakerName = "[ИМЯ ИГРОКА]"
         };
         
-        // Определяем путь для сохранения
         string path = AssetDatabase.GetAssetPath(Selection.activeObject);
         if (path == "")
         {
@@ -34,15 +30,12 @@ public class ChapterDataMenuCreator
             path = path.Replace(System.IO.Path.GetFileName(AssetDatabase.GetAssetPath(Selection.activeObject)), "");
         }
         
-        // Создаем уникальное имя файла
         string assetPathAndName = AssetDatabase.GenerateUniqueAssetPath(path + "/New Chapter Data.asset");
         
-        // Создаем asset файл
         AssetDatabase.CreateAsset(newChapterData, assetPathAndName);
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
         
-        // Выделяем созданный файл
         EditorUtility.FocusProjectWindow();
         Selection.activeObject = newChapterData;
         
