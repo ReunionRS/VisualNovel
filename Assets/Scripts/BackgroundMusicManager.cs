@@ -10,7 +10,7 @@ public class BackgroundMusicManager : MonoBehaviour
     
     [Header("Settings")]
     public float defaultVolume = 0.5f;
-    private float currentVolume = 0.8f; // Громкость по умолчанию из GameSettings
+    private float currentVolume = 0.8f; 
 
     void Awake()
     {
@@ -19,7 +19,6 @@ public class BackgroundMusicManager : MonoBehaviour
             instance = this;
             DontDestroyOnLoad(gameObject);
             
-            // Загружаем настройки громкости
             LoadVolumeSettings();
             PlayMusic();
         }
@@ -47,7 +46,6 @@ public class BackgroundMusicManager : MonoBehaviour
         }
     }
     
-    // Загружаем настройки громкости из PlayerPrefs
     void LoadVolumeSettings()
     {
         if (PlayerPrefs.HasKey("GameSettings"))
@@ -64,10 +62,9 @@ public class BackgroundMusicManager : MonoBehaviour
         }
     }
     
-    // Публичный метод для изменения громкости (вызывается из SettingsManager)
     public void SetVolume(float volume)
     {
-        currentVolume = Mathf.Clamp01(volume); // Ограничиваем от 0 до 1
+        currentVolume = Mathf.Clamp01(volume);
         
         if (audioSource != null)
         {
@@ -76,13 +73,11 @@ public class BackgroundMusicManager : MonoBehaviour
         }
     }
     
-    // Метод для получения текущей громкости
     public float GetVolume()
     {
         return currentVolume;
     }
     
-    // Метод для включения/выключения музыки
     public void SetMusicEnabled(bool enabled)
     {
         if (audioSource != null)
@@ -98,7 +93,6 @@ public class BackgroundMusicManager : MonoBehaviour
         }
     }
     
-    // Метод для смены музыкального трека
     public void ChangeMusic(AudioClip newClip)
     {
         if (audioSource != null && newClip != null)

@@ -30,7 +30,6 @@ public class MainMenuManager : MonoBehaviour
     
     private void SetupButtons()
     {
-        // Настраиваем кнопки главного меню
         if (newGameButton != null)
             newGameButton.onClick.AddListener(StartNewGame);
             
@@ -48,7 +47,6 @@ public class MainMenuManager : MonoBehaviour
     {
         Debug.Log("Starting new game...");
         
-        // Загружаем игровую сцену
         if (!string.IsNullOrEmpty(gameSceneName))
         {
             SceneManager.LoadScene(gameSceneName);
@@ -63,11 +61,8 @@ public class MainMenuManager : MonoBehaviour
     {
         Debug.Log("Loading saved game...");
         
-        // Здесь будет логика загрузки сохранения
-        // Пока что просто загружаем игровую сцену
         if (!string.IsNullOrEmpty(gameSceneName))
         {
-            // TODO: Загрузить данные сохранения
             SceneManager.LoadScene(gameSceneName);
         }
     }
@@ -76,11 +71,9 @@ public class MainMenuManager : MonoBehaviour
     {
         Debug.Log("Opening settings...");
         
-        // Скрываем главное меню
         if (mainMenuPanel != null)
             mainMenuPanel.SetActive(false);
             
-        // Показываем настройки
         if (settingsManager != null)
         {
             settingsManager.ShowSettings();
@@ -99,11 +92,9 @@ public class MainMenuManager : MonoBehaviour
     {
         Debug.Log("Closing settings...");
         
-        // Скрываем настройки
         if (settingsPanel != null)
             settingsPanel.SetActive(false);
             
-        // Показываем главное меню
         ShowMainMenu();
     }
     

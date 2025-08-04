@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-// ScriptableObject для хранения данных главы
+
 [CreateAssetMenu(fileName = "New Chapter", menuName = "Visual Novel/Chapter Data")]
 public class ChapterData : ScriptableObject
 {
