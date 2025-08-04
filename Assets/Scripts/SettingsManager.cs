@@ -52,8 +52,8 @@ public class SettingsManager : MonoBehaviour
     
     [Header("Buttons")]
     public Button okButton;
+    public Button cancelButton;
     public Button defaultsButton;
-    // public Button backButton; // Временно отключаем
     
     [Header("References")]
     public VisualNovelManager vnManager;
@@ -83,17 +83,29 @@ public class SettingsManager : MonoBehaviour
             // ShowFirstTimeSetup();
         }
         
-        ApplySettings();
+        ApplySettingsToGame();
     }
     
     private void SetupUI()
     {
         // Настраиваем UI элементы
         if (okButton != null)
-            okButton.onClick.AddListener(SaveAndClose);
+        {
+            okButton.onClick.RemoveAllListeners(); // Удаляем старые события
+            okButton.onClick.AddListener(ApplySettingsButton); // Применить без закрытия
+        }
+            
+        if (cancelButton != null)
+        {
+            cancelButton.onClick.RemoveAllListeners();
+            cancelButton.onClick.AddListener(CancelAndClose); // Вернуться в меню
+        }
             
         if (defaultsButton != null)
+        {
+            defaultsButton.onClick.RemoveAllListeners();
             defaultsButton.onClick.AddListener(ResetToDefaults);
+        }
             
         /*if (backButton != null)
             backButton.onClick.AddListener(GoBack);*/ // Временно отключаем
@@ -127,7 +139,8 @@ public class SettingsManager : MonoBehaviour
             languageDropdown.options.Clear();
             languageDropdown.options.Add(new TMP_Dropdown.OptionData("Русский"));
             languageDropdown.options.Add(new TMP_Dropdown.OptionData("English"));
-            languageDropdown.options.Add(new TMP_Dropdown.OptionData("日本語"));
+            languageDropdown.options.Add(new TMP_Dropdown.OptionData("Удмурт"));
+            languageDropdown.options.Add(new TMP_Dropdown.OptionData("Татар"));
             languageDropdown.onValueChanged.AddListener(OnLanguageChanged);
         }
     }
@@ -136,6 +149,9 @@ public class SettingsManager : MonoBehaviour
     {
         if (settingsPanel != null)
         {
+            // Загружаем актуальные настройки из PlayerPrefs
+            LoadSettings();
+            
             // Сохраняем текущие настройки для возможности отмены
             originalSettings = JsonUtility.FromJson<GameSettings>(JsonUtility.ToJson(currentSettings));
             
@@ -216,21 +232,25 @@ public class SettingsManager : MonoBehaviour
     {
         currentSettings.isFullscreen = value;
         Screen.fullScreen = value;
+        Debug.Log($"Fullscreen changed to: {value}");
     }
     
     private void OnSkipReadChanged(bool value)
     {
         currentSettings.skipRead = value;
+        Debug.Log($"Skip read changed to: {value}");
     }
     
     private void OnSkipAfterChoiceChanged(bool value)
     {
         currentSettings.skipAfterChoice = value;
+        Debug.Log($"Skip after choice changed to: {value}");
     }
     
     private void OnTextSpeedChanged(float value)
     {
         currentSettings.textSpeed = value;
+        Debug.Log($"Text speed changed to: {value}");
         if (vnManager != null)
             vnManager.typewriterSpeed = 0.1f / value; // Обратная зависимость
     }
@@ -238,18 +258,27 @@ public class SettingsManager : MonoBehaviour
     private void OnAutoSpeedChanged(float value)
     {
         currentSettings.autoSpeed = value;
+        // Debug.Log($"Auto speed changed to: {value}"); // Убираем спам
     }
     
     private void OnMusicVolumeChanged(float value)
     {
         currentSettings.musicVolume = value;
+        Debug.Log($"Music volume changed to: {value}");
+        
+        // Обновляем громкость в AudioSource
         if (musicSource != null)
             musicSource.volume = value;
+            
+        // Обновляем громкость в BackgroundMusicManager
+        if (BackgroundMusicManager.instance != null)
+            BackgroundMusicManager.instance.SetVolume(value);
     }
     
     private void OnSoundVolumeChanged(float value)
     {
         currentSettings.soundVolume = value;
+        Debug.Log($"Sound volume changed to: {value}");
         if (soundSource != null)
             soundSource.volume = value;
     }
@@ -258,17 +287,66 @@ public class SettingsManager : MonoBehaviour
     {
         SystemLanguage[] languages = { SystemLanguage.Russian, SystemLanguage.English, SystemLanguage.Japanese };
         currentSettings.language = languages[value];
+        Debug.Log($"Language changed to: {currentSettings.language}");
     }
     
     public void SaveAndClose()
     {
-        SaveSettings();
-        ApplySettings();
+        SaveSettingsToFile();
+        ApplySettingsToGame();
         CloseSettings();
         
         // Если это первый запуск, отмечаем это
         PlayerPrefs.SetInt("FirstTimePlayed", 1);
         PlayerPrefs.Save();
+    }
+    
+    // Метод для кнопки "Применить" - сохраняет БЕЗ закрытия
+    public void ApplySettingsButton()
+    {
+        if (currentSettings == null)
+        {
+            Debug.LogError("currentSettings is null!");
+            return;
+        }
+        
+        Debug.Log("Applying settings...");
+        SaveSettingsToFile();
+        ApplySettingsToGame();
+        
+        // Показываем сообщение "Настройки применены"
+        StartCoroutine(ShowAppliedMessage());
+    }
+    
+    // Переименовали старый ApplySettings
+    private void ApplySettingsToGame()
+    {
+        // Применяем настройки экрана
+        Screen.fullScreen = currentSettings.isFullscreen;
+        
+        // Применяем аудио настройки
+        if (musicSource != null)
+            musicSource.volume = currentSettings.musicVolume;
+            
+        if (soundSource != null)
+            soundSource.volume = currentSettings.soundVolume;
+        
+        // Применяем настройки скорости текста
+        if (vnManager != null)
+            vnManager.typewriterSpeed = 0.1f / currentSettings.textSpeed;
+    }
+    
+    // Корутина для показа сообщения
+    IEnumerator ShowAppliedMessage()
+    {
+        // Здесь можно показать UI сообщение или просто лог
+        Debug.Log("Настройки применены!");
+        
+        // Если хочешь показать UI сообщение:
+        // Создай Text объект и покажи его на 2 секунды
+        yield return new WaitForSeconds(2f);
+        
+        // Скрыть сообщение
     }
     
     public void CancelAndClose()
@@ -277,7 +355,7 @@ public class SettingsManager : MonoBehaviour
         if (originalSettings != null)
         {
             currentSettings = JsonUtility.FromJson<GameSettings>(JsonUtility.ToJson(originalSettings));
-            ApplySettings();
+            ApplySettingsToGame();
         }
         CloseSettings();
     }
@@ -286,7 +364,7 @@ public class SettingsManager : MonoBehaviour
     {
         currentSettings = new GameSettings(); // Создаем настройки по умолчанию
         UpdateUI();
-        ApplySettings();
+        ApplySettingsToGame();
     }
     
     public void GoBack()
@@ -316,14 +394,16 @@ public class SettingsManager : MonoBehaviour
         {
             string json = PlayerPrefs.GetString("GameSettings");
             currentSettings = JsonUtility.FromJson<GameSettings>(json);
+            Debug.Log($"Settings loaded: autoSpeed = {currentSettings.autoSpeed}");
         }
         else
         {
             currentSettings = new GameSettings(); // Настройки по умолчанию
+            Debug.Log("No saved settings found, using defaults");
         }
     }
     
-    private void SaveSettings()
+    private void SaveSettingsToFile()
     {
         string json = JsonUtility.ToJson(currentSettings);
         PlayerPrefs.SetString("GameSettings", json);
