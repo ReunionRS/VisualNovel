@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class BackgroundMusicManager : MonoBehaviour
 {
@@ -10,7 +11,10 @@ public class BackgroundMusicManager : MonoBehaviour
     
     [Header("Settings")]
     public float defaultVolume = 0.5f;
-    private float currentVolume = 0.8f; 
+    public float fadeSpeed = 1f; 
+    private float currentVolume = 0.8f;
+    
+    private bool isFading = false;
 
     void Awake()
     {
@@ -66,7 +70,7 @@ public class BackgroundMusicManager : MonoBehaviour
     {
         currentVolume = Mathf.Clamp01(volume);
         
-        if (audioSource != null)
+        if (audioSource != null && !isFading)
         {
             audioSource.volume = currentVolume;
             Debug.Log($"Music volume changed to: {currentVolume}");
@@ -97,10 +101,106 @@ public class BackgroundMusicManager : MonoBehaviour
     {
         if (audioSource != null && newClip != null)
         {
-            audioSource.Stop();
-            audioSource.clip = newClip;
-            audioSource.Play();
-            backgroundMusic = newClip;
+            if (audioSource.clip == newClip)
+                return;
+                
+            StartCoroutine(FadeToNewMusic(newClip));
         }
+    }
+    
+    public void ChangeMusicByName(string musicName)
+    {
+        if (string.IsNullOrEmpty(musicName))
+            return;
+            
+        AudioClip newClip = Resources.Load<AudioClip>("Music/" + musicName);
+        if (newClip != null)
+        {
+            ChangeMusic(newClip);
+        }
+        else
+        {
+            Debug.LogWarning($"Music file not found: Music/{musicName}");
+        }
+    }
+    
+    IEnumerator FadeToNewMusic(AudioClip newClip)
+    {
+        isFading = true;
+        
+        float startVolume = audioSource.volume;
+        while (audioSource.volume > 0)
+        {
+            audioSource.volume -= startVolume * Time.deltaTime * fadeSpeed;
+            yield return null;
+        }
+        
+        audioSource.Stop();
+        audioSource.clip = newClip;
+        backgroundMusic = newClip;
+        audioSource.Play();
+        
+        while (audioSource.volume < currentVolume)
+        {
+            audioSource.volume += currentVolume * Time.deltaTime * fadeSpeed;
+            yield return null;
+        }
+        
+        audioSource.volume = currentVolume;
+        isFading = false;
+        
+        Debug.Log($"Music changed to: {newClip.name}");
+    }
+    
+    public void StopMusicWithFade()
+    {
+        if (audioSource != null && audioSource.isPlaying)
+        {
+            StartCoroutine(FadeOutMusic());
+        }
+    }
+    
+    IEnumerator FadeOutMusic()
+    {
+        isFading = true;
+        float startVolume = audioSource.volume;
+        
+        while (audioSource.volume > 0)
+        {
+            audioSource.volume -= startVolume * Time.deltaTime * fadeSpeed;
+            yield return null;
+        }
+        
+        audioSource.Stop();
+        audioSource.volume = currentVolume;
+        isFading = false;
+        
+        Debug.Log("Music stopped with fade");
+    }
+    
+    public void ResumeMusicWithFade()
+    {
+        if (audioSource != null && !audioSource.isPlaying && audioSource.clip != null)
+        {
+            StartCoroutine(FadeInMusic());
+        }
+    }
+    
+    IEnumerator FadeInMusic()
+    {
+        isFading = true;
+        audioSource.volume = 0;
+        audioSource.Play();
+        
+        while (audioSource.volume < currentVolume)
+        {
+            audioSource.volume += currentVolume * Time.deltaTime * fadeSpeed;
+            yield return null;
+        }
+        
+        audioSource.volume = currentVolume;
+        isFading = false;
+        
+        Debug.Log("Music resumed with fade");
     }
 }

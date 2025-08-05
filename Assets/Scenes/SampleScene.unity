@@ -6083,6 +6083,7 @@ MonoBehaviour:
   playerName: "\u0418\u0433\u0440\u043E\u043A"
   currentChapter: {fileID: 11400000, guid: 01f375a8f5e116a468dbcf35fd5de8c8, type: 2}
   sfxSource: {fileID: 0}
+  voiceSource: {fileID: 0}
   guitarClip: {fileID: 0}
 --- !u!4 &1212258720
 Transform:
@@ -6357,8 +6358,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   audioSource: {fileID: 730105955}
-  backgroundMusic: {fileID: 8300000, guid: 64f556c231f1fa043b212c715830c199, type: 3}
+  backgroundMusic: {fileID: 8300000, guid: a538fd2d75cf9344083132bca565685c, type: 3}
   defaultVolume: 0.5
+  fadeSpeed: 1
 --- !u!4 &1334859944
 Transform:
   m_ObjectHideFlags: 0

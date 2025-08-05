@@ -4170,8 +4170,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   audioSource: {fileID: 111219785}
-  backgroundMusic: {fileID: 8300000, guid: 64f556c231f1fa043b212c715830c199, type: 3}
+  backgroundMusic: {fileID: 8300000, guid: a538fd2d75cf9344083132bca565685c, type: 3}
   defaultVolume: 0.5
+  fadeSpeed: 1
 --- !u!4 &1041446584
 Transform:
   m_ObjectHideFlags: 0

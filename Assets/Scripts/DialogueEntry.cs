@@ -7,8 +7,15 @@ public class DialogueEntry
 {
     [TextArea(3, 10)]
     public string text;
+    
+    [Header("Visuals")]
     public string backgroundImage;
+    
+    [Header("Audio")]
     public string soundEffect;
+    public string backgroundMusic;
+    public string voiceClip;
+    
     [Header("Character")]
-    public string speakerName = "[ИМЯ ИГРОКА]"; 
+    public string speakerName = "[ИМЯ ИГРОКА]";
 }
