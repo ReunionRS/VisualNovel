@@ -825,7 +825,7 @@ GameObject:
   - component: {fileID: 82149891}
   - component: {fileID: 82149890}
   m_Layer: 5
-  m_Name: Character
+  m_Name: Character Layer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -851,7 +851,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: 972f110fa249b82468fba4e07a116984, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -878,7 +878,7 @@ RectTransform:
   m_GameObject: {fileID: 82149889}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.39, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1774346996}
@@ -4159,7 +4159,7 @@ GameObject:
   - component: {fileID: 724274567}
   - component: {fileID: 724274566}
   m_Layer: 5
-  m_Name: CharacterOverlay
+  m_Name: Character Overlay
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4174,7 +4174,7 @@ RectTransform:
   m_GameObject: {fileID: 724274564}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.39, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1774346996}
@@ -4204,7 +4204,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: 972f110fa249b82468fba4e07a116984, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -6500,11 +6500,8 @@ MonoBehaviour:
   nextButton: {fileID: 445320959}
   dialoguePanel: {fileID: 0}
   characterImage: {fileID: 82149890}
-  characterImageOverlay: {fileID: 0}
+  characterImageOverlay: {fileID: 724274566}
   characterCanvasGroup: {fileID: 0}
-  leftPosition: {x: -300, y: 0}
-  centerPosition: {x: 0, y: 0}
-  rightPosition: {x: 300, y: 0}
   typewriterSpeed: 0.04
   backgroundFadeDuration: 1
   characterFadeDuration: 0.5
@@ -8916,10 +8913,10 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 82149892}
-  - {fileID: 724274565}
   - {fileID: 374796787}
   - {fileID: 215982287}
+  - {fileID: 82149892}
+  - {fileID: 724274565}
   - {fileID: 985371244}
   - {fileID: 1386159959}
   - {fileID: 445320962}
