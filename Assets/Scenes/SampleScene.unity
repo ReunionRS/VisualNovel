@@ -6345,7 +6345,7 @@ GameObject:
   - component: {fileID: 1192176478}
   - component: {fileID: 1192176477}
   m_Layer: 0
-  m_Name: Audio Source
+  m_Name: Voice source
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7983,7 +7983,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a3bd3a7a3c021c940ac560bbb34e84cf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  uiAudioSource: {fileID: 0}
+  uiAudioSource: {fileID: 730105955}
   defaultHoverSound: button_hover
   defaultClickSound: button_click
   defaultMenuOpenSound: menu_open

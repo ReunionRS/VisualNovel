@@ -51,7 +51,10 @@ public class VisualNovelManager : MonoBehaviour
     private Coroutine typingCoroutine;
     private Coroutine voiceCoroutine;
     private string currentCharacterSprite = "";
-    
+    private string currentMusicName = "";
+    private Coroutine musicDuckCoroutine;
+    private Coroutine voiceCoroutineForMusic;
+
     void Start()
     {
         if (currentChapter == null)
@@ -131,9 +134,20 @@ public class VisualNovelManager : MonoBehaviour
                 StopCoroutine(voiceCoroutine);
             }
             
+            if (voiceCoroutineForMusic != null)
+            {
+                StopCoroutine(voiceCoroutineForMusic);
+            }
+            
             if (voiceSource != null && voiceSource.isPlaying)
             {
                 voiceSource.Stop();
+            }
+            
+            // Восстанавливаем громкость музыки после прерывания озвучки
+            if (BackgroundMusicManager.instance != null)
+            {
+                BackgroundMusicManager.instance.RestoreMusicVolume(0.3f);
             }
             
             dialogueText.text = ProcessText(currentChapter.dialogues[currentDialogueIndex].text);
@@ -158,20 +172,38 @@ public class VisualNovelManager : MonoBehaviour
         
         DialogueEntry currentEntry = currentChapter.dialogues[currentDialogueIndex];
         
-        if (currentEntry.text.Contains("[ВВОД_ИМЕНИ]"))
-        {
-        }
-        
         // Загружаем фон
-        LoadBackground(currentEntry.backgroundImage);
+        if (!string.IsNullOrEmpty(currentEntry.backgroundImage))
+        {
+            LoadBackground(currentEntry.backgroundImage);
+        }
         
         // Загружаем/обновляем персонажа
         LoadCharacter(currentEntry);
         
-        // Обрабатываем музыку
+        // Обрабатываем музыку - ВСЕГДА, даже если есть озвучка
         if (!string.IsNullOrEmpty(currentEntry.backgroundMusic))
         {
-            ChangeBGMusic(currentEntry.backgroundMusic);
+            // Проверяем, нужно ли менять музыку
+            if (currentEntry.backgroundMusic != currentMusicName)
+            {
+                ChangeBGMusic(currentEntry.backgroundMusic);
+                currentMusicName = currentEntry.backgroundMusic;
+                Debug.Log($"Starting new music: {currentMusicName}");
+            }
+            else
+            {
+                Debug.Log($"Music already playing: {currentMusicName}");
+            }
+        }
+        else if (!string.IsNullOrEmpty(currentMusicName))
+        {
+            // Если в реплике не указана музыка, но предыдущая играла - останавливаем
+            if (BackgroundMusicManager.instance != null)
+            {
+                BackgroundMusicManager.instance.StopMusicWithFade();
+            }
+            currentMusicName = "";
         }
         
         // Обрабатываем звуковые эффекты
@@ -202,7 +234,7 @@ public class VisualNovelManager : MonoBehaviour
             if (currentEntry.HasVoice())
             {
                 AudioClip voiceClip = currentEntry.GetVoiceClip();
-                PlayVoiceClipDirect(voiceClip);
+                voiceCoroutineForMusic = StartCoroutine(PlayVoiceWithMusicDuck(voiceClip));
             }
             typingCoroutine = StartCoroutine(TypewriterEffect(processedText));
         }
@@ -329,7 +361,6 @@ public class VisualNovelManager : MonoBehaviour
             Debug.Log($"Loading background: {imageName}");
             if (backgroundImageOverlay != null)
             {
-                Debug.Log("Starting fade transition");
                 StartCoroutine(FadeToNewBackground(backgroundSprite));
             }
             else
@@ -346,14 +377,10 @@ public class VisualNovelManager : MonoBehaviour
     
     IEnumerator FadeToNewBackground(Sprite newBackground)
     {
-        Debug.Log("Fade transition started");
-        
         if (backgroundImageOverlay != null)
         {
             backgroundImageOverlay.sprite = newBackground;
             backgroundImageOverlay.color = new Color(1, 1, 1, 0);
-            
-            Debug.Log($"Fading over {backgroundFadeDuration} seconds");
             
             float elapsedTime = 0;
             while (elapsedTime < backgroundFadeDuration)
@@ -364,15 +391,12 @@ public class VisualNovelManager : MonoBehaviour
                 yield return null;
             }
             
-            Debug.Log("Fade completed, swapping backgrounds");
-            
             backgroundImage.sprite = newBackground;
             backgroundImageOverlay.color = new Color(1, 1, 1, 0);
         }
         else
         {
             backgroundImage.sprite = newBackground;
-            Debug.LogWarning("No overlay found, using instant background change");
         }
     }
     
@@ -390,33 +414,10 @@ public class VisualNovelManager : MonoBehaviour
         {
             Debug.LogWarning($"SFX file not found: SFX/{effectName}");
             
-            switch (effectName)
+            if (effectName == "guitar" && guitarClip != null)
             {
-                case "guitar":
-                    if (guitarClip != null)
-                    {
-                        sfxSource.PlayOneShot(guitarClip);
-                    }
-                    break;
+                sfxSource.PlayOneShot(guitarClip);
             }
-        }
-    }
-    
-    void PlayVoiceClip(string voiceName)
-    {
-        if (voiceSource == null || string.IsNullOrEmpty(voiceName)) return;
-        
-        AudioClip voiceClip = Resources.Load<AudioClip>("Voice/" + voiceName);
-        if (voiceClip != null)
-        {
-            voiceSource.Stop();
-            voiceSource.clip = voiceClip;
-            voiceSource.Play();
-            Debug.Log($"Playing voice: {voiceName}");
-        }
-        else
-        {
-            Debug.LogWarning($"Voice file not found: Voice/{voiceName}");
         }
     }
     
@@ -428,6 +429,38 @@ public class VisualNovelManager : MonoBehaviour
         voiceSource.clip = voiceClip;
         voiceSource.Play();
         Debug.Log($"Playing voice: {voiceClip.name}");
+    }
+    
+    IEnumerator PlayVoiceWithMusicDuck(AudioClip voiceClip)
+    {
+        if (voiceClip == null) yield break;
+        
+        // Приглушаем музыку, если она играет
+        if (BackgroundMusicManager.instance != null)
+        {
+            BackgroundMusicManager.instance.DuckMusicForVoice(0.3f, 0.3f);
+        }
+        
+        // Ждем немного, чтобы музыка успела приглушиться
+        yield return new WaitForSeconds(0.3f);
+        
+        // Воспроизводим озвучку
+        if (voiceSource != null)
+        {
+            voiceSource.Stop();
+            voiceSource.clip = voiceClip;
+            voiceSource.Play();
+            Debug.Log($"Playing voice: {voiceClip.name}");
+            
+            // Ждем окончания озвучки
+            yield return new WaitForSeconds(voiceClip.length);
+            
+            // Восстанавливаем громкость музыки
+            if (BackgroundMusicManager.instance != null)
+            {
+                BackgroundMusicManager.instance.RestoreMusicVolume(0.5f);
+            }
+        }
     }
     
     void ChangeBGMusic(string musicName)
@@ -470,7 +503,13 @@ public class VisualNovelManager : MonoBehaviour
             yield break;
         }
         
-        // Запускаем озвучку с небольшой задержкой
+        // Приглушаем музыку перед началом озвучки
+        if (BackgroundMusicManager.instance != null)
+        {
+            BackgroundMusicManager.instance.DuckMusicForVoice(0.3f, 0.3f);
+        }
+        
+        // Небольшая задержка перед началом озвучки
         yield return new WaitForSeconds(voiceSyncDelay);
         
         if (voiceSource != null)
@@ -484,18 +523,25 @@ public class VisualNovelManager : MonoBehaviour
         // Рассчитываем скорость печати на основе длины аудио и текста
         float audioDuration = voiceClip.length;
         int textLength = text.Length;
-        float charDelay = (audioDuration / textLength) * 0.95f; // 95% для небольшого запаса
+        float charDelay = (audioDuration / textLength) * 0.95f;
         
         // Минимальная и максимальная задержка между символами
         charDelay = Mathf.Clamp(charDelay, 0.02f, 0.15f);
-        
-        Debug.Log($"Voice sync: Audio duration: {audioDuration}s, Text length: {textLength}, Char delay: {charDelay}s");
         
         // Печатаем текст синхронно с озвучкой
         foreach (char letter in text)
         {
             dialogueText.text += letter;
             yield return new WaitForSeconds(charDelay);
+        }
+        
+        // Ждем окончания озвучки
+        yield return new WaitForSeconds(voiceClip.length - (charDelay * textLength) + 0.1f);
+        
+        // Восстанавливаем громкость музыки после озвучки
+        if (BackgroundMusicManager.instance != null)
+        {
+            BackgroundMusicManager.instance.RestoreMusicVolume(0.5f);
         }
         
         isTyping = false;
@@ -537,6 +583,7 @@ public class VisualNovelManager : MonoBehaviour
             currentChapter = currentChapter.nextChapter;
             currentDialogueIndex = 0;
             currentCharacterSprite = "";
+            currentMusicName = ""; // Сбрасываем имя текущей музыки при переходе на новую главу
             ShowNextDialogue();
         }
     }

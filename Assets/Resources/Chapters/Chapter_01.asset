@@ -35,10 +35,10 @@ MonoBehaviour:
     characterSprite: Rex1
     hideCharacter: 0
     soundEffect: 
-    backgroundMusic: Music_01
+    backgroundMusic: 
     voiceClipDirect: {fileID: 8300000, guid: e94a999ae301cf74daee062d9fc0e613, type: 3}
     voiceClipName: Rex_01
-    syncVoiceWithText: 1
+    syncVoiceWithText: 0
     speakerName: "\u041A\u0430\u043F\u0438\u0442\u0430\u043D \u0420\u0435\u043A\u0441"
   - text: "\u041C\u0435\u043D\u044F \u0442\u044B \u043C\u043E\u0433\u043B\u0430 \u0432\u0438\u0434\u0435\u0442\u044C
       \u043D\u0430 \u0424\u0435\u043D\u0438\u043A\u0441\u0435, \u041C\u0430\u0446\u0443\u0440\u0438,
@@ -50,7 +50,7 @@ MonoBehaviour:
     characterSprite: Rex2
     hideCharacter: 0
     soundEffect: 
-    backgroundMusic: 
+    backgroundMusic: Music_01
     voiceClipDirect: {fileID: 8300000, guid: 1c35688690b2e8e47b8d95e6a4875158, type: 3}
     voiceClipName: Rex_02
     syncVoiceWithText: 1
@@ -64,7 +64,7 @@ MonoBehaviour:
     characterSprite: Rex2
     hideCharacter: 0
     soundEffect: 
-    backgroundMusic: 
+    backgroundMusic: Music_01
     voiceClipDirect: {fileID: 8300000, guid: d7e3a963132fdc148b9b0d185eb6cb42, type: 3}
     voiceClipName: Rex_03
     syncVoiceWithText: 1

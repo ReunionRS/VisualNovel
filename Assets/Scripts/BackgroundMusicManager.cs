@@ -15,6 +15,7 @@ public class BackgroundMusicManager : MonoBehaviour
     private float currentVolume = 0.8f;
     
     private bool isFading = false;
+    private string currentMusicName = ""; // Запоминаем текущую музыку
 
     void Awake()
     {
@@ -101,8 +102,12 @@ public class BackgroundMusicManager : MonoBehaviour
     {
         if (audioSource != null && newClip != null)
         {
-            if (audioSource.clip == newClip)
+            // Проверяем, что это не та же самая музыка, что уже играет
+            if (audioSource.clip == newClip && audioSource.isPlaying)
+            {
+                Debug.Log($"Music is already playing: {newClip.name}");
                 return;
+            }
                 
             StartCoroutine(FadeToNewMusic(newClip));
         }
@@ -113,9 +118,17 @@ public class BackgroundMusicManager : MonoBehaviour
         if (string.IsNullOrEmpty(musicName))
             return;
             
+        // Проверяем, не пытаемся ли запустить ту же самую музыку
+        if (currentMusicName == musicName && audioSource != null && audioSource.isPlaying)
+        {
+            Debug.Log($"Music '{musicName}' is already playing");
+            return;
+        }
+        
         AudioClip newClip = Resources.Load<AudioClip>("Music/" + musicName);
         if (newClip != null)
         {
+            currentMusicName = musicName;
             ChangeMusic(newClip);
         }
         else
@@ -128,14 +141,19 @@ public class BackgroundMusicManager : MonoBehaviour
     {
         isFading = true;
         
-        float startVolume = audioSource.volume;
-        while (audioSource.volume > 0)
+        // Если музыка уже играет, делаем fade out
+        if (audioSource.isPlaying)
         {
-            audioSource.volume -= startVolume * Time.deltaTime * fadeSpeed;
-            yield return null;
+            float startVolume = audioSource.volume;
+            while (audioSource.volume > 0)
+            {
+                audioSource.volume -= startVolume * Time.deltaTime * fadeSpeed;
+                yield return null;
+            }
+            
+            audioSource.Stop();
         }
         
-        audioSource.Stop();
         audioSource.clip = newClip;
         backgroundMusic = newClip;
         audioSource.Play();
@@ -174,6 +192,7 @@ public class BackgroundMusicManager : MonoBehaviour
         audioSource.Stop();
         audioSource.volume = currentVolume;
         isFading = false;
+        currentMusicName = ""; // Сбрасываем название
         
         Debug.Log("Music stopped with fade");
     }
@@ -202,5 +221,55 @@ public class BackgroundMusicManager : MonoBehaviour
         isFading = false;
         
         Debug.Log("Music resumed with fade");
+    }
+    
+    // МЕТОД 1: Приглушить музыку для озвучки
+    public void DuckMusicForVoice(float duckVolume = 0.3f, float duration = 0.3f)
+    {
+        StartCoroutine(DuckMusicCoroutine(duckVolume, duration));
+    }
+    
+    IEnumerator DuckMusicCoroutine(float duckVolume, float duration)
+    {
+        if (!audioSource.isPlaying) yield break;
+        
+        float originalVolume = audioSource.volume;
+        float targetVolume = originalVolume * duckVolume;
+        
+        // Плавно снижаем громкость
+        float elapsedTime = 0f;
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = elapsedTime / duration;
+            audioSource.volume = Mathf.Lerp(originalVolume, targetVolume, t);
+            yield return null;
+        }
+        
+        audioSource.volume = targetVolume;
+    }
+    
+    // МЕТОД 2: Восстановить громкость музыки
+    public void RestoreMusicVolume(float duration = 0.5f)
+    {
+        StartCoroutine(RestoreVolumeCoroutine(duration));
+    }
+    
+    IEnumerator RestoreVolumeCoroutine(float duration)
+    {
+        if (!audioSource.isPlaying) yield break;
+        
+        float currentVol = audioSource.volume;
+        
+        float elapsedTime = 0f;
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = elapsedTime / duration;
+            audioSource.volume = Mathf.Lerp(currentVol, currentVolume, t);
+            yield return null;
+        }
+        
+        audioSource.volume = currentVolume;
     }
 }
