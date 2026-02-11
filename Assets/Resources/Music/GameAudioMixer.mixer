@@ -57,7 +57,8 @@ AudioMixerSnapshotController:
   m_Name: 'VoiceDucked '
   m_AudioMixer: {fileID: 24100000}
   m_SnapshotID: a3a221ba06fb6134d9ee061dbce93bd2
-  m_FloatValues: {}
+  m_FloatValues:
+    bb99bda0d1510fd4aaa6d0770f92b24b: 0.04171297
   m_TransitionOverrides: {}
 --- !u!241 &24100000
 AudioMixerController:
@@ -85,7 +86,7 @@ AudioMixerController:
     - 2a095566a310a5d47bc1f504d8573e62
     name: View
   m_CurrentViewIndex: 0
-  m_TargetSnapshot: {fileID: -20735263700167689}
+  m_TargetSnapshot: {fileID: 24500006}
 --- !u!243 &24300002
 AudioMixerGroupController:
   m_ObjectHideFlags: 0
